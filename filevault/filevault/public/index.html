@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="sw" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FileVault</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b3d91'/%3E%3Cpath d='M8 9h6l2 3h8v11H8z' fill='%23f2a900'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // Apply saved theme/language before paint (avoids flash). Storage may be blocked, so guard it.
+  (function () {
+    try {
+      var th = localStorage.getItem('fv_theme');
+      if (!th) th = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', th);
+      var lg = localStorage.getItem('fv_lang'); if (lg) document.documentElement.lang = lg;
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div id="toasts" aria-live="polite"></div>
+
+<!-- File viewer -->
+<div id="viewer" class="hidden">
+  <div class="vbox">
+    <div class="vbar">
+      <b id="vName"></b>
+      <span class="row"><a id="vDl" class="btnlink" download data-i18n="viewer.download"></a><button id="vClose" type="button" class="ghost" data-i18n="viewer.close"></button></span>
+    </div>
+    <div id="vBody"></div>
+  </div>
+</div>
+
+<!-- Top utility bar -->
+<div class="topbar">
+  <div class="wrap topbar-in">
+    <span class="top-note" data-i18n="top.note"></span>
+    <div class="tools">
+      <label class="sr" for="langSel" data-i18n="lang.label"></label>
+      <select id="langSel" aria-label="Language">
+        <option value="sw">Kiswahili</option>
+        <option value="en">English</option>
+      </select>
+      <button id="themeBtn" type="button" class="icon-btn" data-i18n-title="theme.toggle" aria-label="Theme"><span id="themeIcon">🌙</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Site header -->
+<header class="site-header">
+  <div class="wrap header-in">
+    <a href="#" class="brand" id="brandLink">
+      <svg width="42" height="42" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="var(--brand)"/><path d="M8 9h6l2 3h8v11H8z" fill="var(--accent)"/></svg>
+      <span><b>FileVault</b><small data-i18n="brand.sub"></small></span>
+    </a>
+  </div>
+</header>
+
+<!-- Navigation strip -->
+<nav class="navstrip" aria-label="Main">
+  <div class="wrap nav-in">
+    <div class="navlinks">
+      <a href="#" id="navHome" data-i18n="nav.home"></a>
+      <a href="#" id="navAccounts" class="hidden" data-i18n="nav.accounts"></a>
+    </div>
+    <div class="userbox hidden" id="userBox">
+      <span class="userpill">👤 <span id="who"></span></span>
+      <button class="ghost light" id="logoutBtn" type="button" data-i18n="nav.logout"></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ AUTH VIEW ============ -->
+<main id="authView" class="hidden">
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div class="hero-text">
+        <h1 data-i18n="hero.title"></h1>
+        <p data-i18n="hero.sub"></p>
+        <ul>
+          <li data-i18n="hero.b1"></li>
+          <li data-i18n="hero.b2"></li>
+          <li data-i18n="hero.b3"></li>
+        </ul>
+      </div>
+      <div class="card auth">
+        <div class="tabs" id="authTabs">
+          <button id="tabLogin" class="active" type="button" data-i18n="tab.login"></button>
+          <button id="tabRegister" type="button" data-i18n="tab.register"></button>
+        </div>
+        <div id="authBox">
+          <label for="au" data-i18n="auth.username"></label>
+          <input id="au" type="text" autocomplete="username" autocapitalize="none">
+          <label for="ap" data-i18n="auth.password"></label>
+          <div class="pw">
+            <input id="ap" type="password" autocomplete="current-password">
+            <button type="button" id="pwToggle" class="ghost" data-i18n="pw.show"></button>
+          </div>
+          <div id="authMsg" class="msg hidden" role="alert"></div>
+          <div style="margin-top:14px"><button id="authBtn" type="button" class="block"></button></div>
+          <p id="authHint" class="hint"></p>
+        </div>
+        <div id="regOk" class="okpanel hidden">
+          <div class="tick">✓</div>
+          <h2 data-i18n="reg.ok.title"></h2>
+          <p class="muted"><span data-i18n="reg.welcome"></span> <b id="regName"></b>. <span data-i18n="reg.created"></span></p>
+          <button id="regContinue" type="button" class="block" data-i18n="reg.continue"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap features">
+    <h2 class="section-title" data-i18n="feat.title"></h2>
+    <div class="feat-grid">
+      <div class="card feat"><div class="feat-ic">👥</div><h3 data-i18n="feat1.t"></h3><p data-i18n="feat1.d"></p></div>
+      <div class="card feat"><div class="feat-ic">🗂️</div><h3 data-i18n="feat2.t"></h3><p data-i18n="feat2.d"></p></div>
+      <div class="card feat"><div class="feat-ic">🔒</div><h3 data-i18n="feat3.t"></h3><p data-i18n="feat3.d"></p></div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ APP VIEW ============ -->
+<main id="appView" class="hidden">
+  <section class="banner">
+    <div class="wrap">
+      <h1 id="pageTitle"></h1>
+      <div class="crumbs" id="crumbs"></div>
+    </div>
+  </section>
+
+  <div class="wrap content">
+    <!-- accounts list -->
+    <section id="listView">
+      <div class="card">
+        <h2 data-i18n="acc.create.title"></h2>
+        <div id="accForm">
+          <div class="grid3">
+            <div><label for="an" data-i18n="acc.name"></label><input id="an" type="text"></div>
+            <div><label for="ap2" data-i18n="acc.phone"></label><input id="ap2" type="tel"></div>
+            <div><label for="ae" data-i18n="acc.email"></label><input id="ae" type="email"></div>
+          </div>
+          <div style="margin-top:14px"><button id="accBtn" type="button" data-i18n="acc.btn"></button></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2><span data-i18n="acc.list.title"></span> <span id="count" class="badge"></span></h2>
+        <div id="accList"></div>
+      </div>
+    </section>
+
+    <!-- account detail -->
+    <section id="detailView" class="hidden">
+      <button class="ghost back" id="backBtn" type="button" data-i18n="btn.back"></button>
+      <div class="card">
+        <div class="row between">
+          <div>
+            <h2 id="dName" style="margin:0"></h2>
+            <div id="dInfo" class="muted" style="margin-top:4px"></div>
+          </div>
+          <button class="danger" id="delAccBtn" type="button" data-i18n="acc.delete"></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="upload.title"></h2>
+        <div class="drop" id="drop">
+          <p data-i18n="upload.drop"></p>
+          <input id="fileInput" type="file" multiple>
+        </div>
+        <div id="stage" class="hidden">
+          <div class="row between" style="margin-bottom:10px">
+            <b><span data-i18n="stage.title"></span> <span id="stageCount" class="badge"></span></b>
+            <button id="stageClear" class="danger" type="button" data-i18n="stage.clear"></button>
+          </div>
+          <div id="stageGrid" class="grid"></div>
+          <div style="margin-top:12px"><button id="uploadBtn" type="button"></button></div>
+        </div>
+        <progress id="prog" class="hidden" max="100" value="0"></progress>
+      </div>
+      <div class="card">
+        <h2><span data-i18n="files.title"></span> <span id="fcount" class="badge"></span></h2>
+        <div id="fileGrid" class="grid"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="wrap foot-grid">
+    <div>
+      <h4 data-i18n="foot.about.title"></h4>
+      <p data-i18n="foot.about"></p>
+    </div>
+    <div>
+      <h4 data-i18n="foot.links"></h4>
+      <ul>
+        <li><a href="#" id="footHome" data-i18n="nav.home"></a></li>
+        <li><a href="#" id="footAccounts" data-i18n="nav.accounts"></a></li>
+      </ul>
+    </div>
+    <div>
+      <h4 data-i18n="foot.info.title"></h4>
+      <p data-i18n="foot.info"></p>
+    </div>
+  </div>
+  <div class="copy"><div class="wrap" data-i18n="foot.copy"></div></div>
+</footer>
+
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
